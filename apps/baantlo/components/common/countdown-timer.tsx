@@ -162,10 +162,10 @@ function getHumanSegments(secondsRemaining: number): HumanSegment[] {
 }
 
 function getClockSegments(secondsRemaining: number): ClockSegment[] {
-	const safeSeconds = Math.max(secondsRemaining, 0);
+	const safeSeconds = Math.max(Math.floor(secondsRemaining), 0);
 	const hours = Math.floor(safeSeconds / 3600);
 	const minutes = Math.floor((safeSeconds % 3600) / 60);
-	const seconds = safeSeconds % 60;
+	const seconds = Math.floor(safeSeconds % 60);
 
 	return [
 		{ type: 'unit', key: 'hours', value: hours.toString().padStart(2, '0') },

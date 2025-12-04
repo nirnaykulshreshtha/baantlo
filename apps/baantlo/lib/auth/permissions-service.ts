@@ -14,6 +14,9 @@
  * without requiring a rebuild.
  */
 
+import { z } from "zod"
+import { publicApiRequest } from "@/lib/shared/public-api-request"
+
 /**
  * Type definition for the permissions configuration structure.
  */
@@ -23,6 +26,16 @@ export type PermissionsConfig = {
   platform_roles: Record<string, string[]>
   group_roles: Record<string, string[]>
 }
+
+/**
+ * Zod schema for validating permissions configuration response.
+ */
+const PermissionsConfigSchema = z.object({
+  platform_permissions: z.array(z.string()),
+  group_permissions: z.array(z.string()),
+  platform_roles: z.record(z.string(), z.array(z.string())),
+  group_roles: z.record(z.string(), z.array(z.string())),
+})
 
 /**
  * Default permissions configuration used as fallback when backend is unavailable.
@@ -116,7 +129,19 @@ let cacheTimestamp: number = 0
 const CACHE_TTL_MS = 3600000 // 1 hour
 
 /**
+ * Gets the permissions API URL based on the environment.
+ * Uses Next.js API route which proxies to the backend.
+ * 
+ * @returns The permissions API URL
+ */
+function getPermissionsApiUrl(): string {
+  // Always use the Next.js API route (works on both server and client)
+  return "/api/v1/auth/permissions"
+}
+
+/**
  * Fetches permissions from the Next.js API route (which proxies to backend).
+ * Uses the requestPermissions function for type-safe, validated requests.
  * 
  * @param useCache - Whether to use cached permissions if available (default: true)
  * @returns Permissions configuration
@@ -129,55 +154,18 @@ async function fetchPermissions(useCache: boolean = true): Promise<PermissionsCo
   }
 
   try {
-    // Determine the API URL based on environment
-    const isServer = typeof window === "undefined"
-    
-    // Lazy import env only on server to avoid client-side issues
-    let apiUrl: string
-    if (isServer) {
-      // Dynamic import to avoid bundling env.ts in client bundle
-      const { env } = await import("@/lib/env")
-      apiUrl = env.BACKEND_API_URL
-        ? `${env.BACKEND_API_URL}/permissions`
-        : "http://localhost:3000/api/v1/permissions"
-    } else {
-      // Client-side: use relative URL
-      apiUrl = "/api/v1/permissions"
-    }
-
+    const apiUrl = getPermissionsApiUrl()
     console.log(`[Permissions Service] Fetching permissions from: ${apiUrl}`)
 
-    const response = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-      // On server, use cache with revalidation
-      ...(isServer && {
-        next: {
-          revalidate: 3600,
-        },
-      }),
+    // Use the shared public API request function for type-safe, validated requests
+    const data = await publicApiRequest(PermissionsConfigSchema, {
+      url: apiUrl,
+      errorMessage: "Failed to fetch permissions from backend",
+      revalidate: 3600, // Revalidate every hour on server
     })
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch permissions: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json()
-
-    // Validate response structure
-    if (
-      !data.platform_permissions ||
-      !data.group_permissions ||
-      !data.platform_roles ||
-      !data.group_roles
-    ) {
-      throw new Error("Invalid permissions response structure")
-    }
-
     // Update cache
-    permissionsCache = data as PermissionsConfig
+    permissionsCache = data
     cacheTimestamp = Date.now()
 
     console.log(
@@ -231,13 +219,63 @@ export function getCachedPermissions(): PermissionsConfig {
 }
 
 /**
+ * Checks if the current request path is an auth route.
+ * Auth routes don't need permissions, so we skip fetching.
+ * 
+ * @param pathname - The request pathname (optional, will try to detect if not provided)
+ * @returns True if the path is an auth route
+ */
+function isAuthRoute(pathname?: string): boolean {
+  // If pathname is provided, use it
+  if (pathname) {
+    return (
+      pathname.startsWith("/login") ||
+      pathname.startsWith("/register") ||
+      pathname.startsWith("/verify-") ||
+      pathname.startsWith("/forgot-password") ||
+      pathname.startsWith("/reset-password")
+    )
+  }
+
+  // Client-side: check current pathname
+  if (typeof window !== "undefined") {
+    return isAuthRoute(window.location.pathname)
+  }
+
+  // Server-side: try to use Next.js headers if available
+  try {
+    // Dynamic import to avoid bundling in client
+    const { headers } = require("next/headers")
+    const headersList = headers()
+    const pathname = headersList.get("x-pathname") || headersList.get("referer")?.split("?")[0] || ""
+    if (pathname) {
+      return isAuthRoute(pathname)
+    }
+  } catch {
+    // headers() not available or not in request context
+    // This is fine - we'll skip auto-init and fetch when needed
+  }
+
+  // Default: assume not an auth route (conservative approach)
+  // Permissions will be fetched when actually needed
+  return false
+}
+
+/**
  * Initializes permissions cache on server startup.
  * This is called automatically on server-side imports to warm up the cache.
  * Safe to call multiple times - it will only fetch if cache is empty or expired.
+ * 
+ * Skips initialization on auth routes since permissions aren't needed there.
  */
 async function initializePermissions(): Promise<void> {
   // Only initialize on server-side
   if (typeof window !== "undefined") {
+    return
+  }
+
+  // Skip initialization on auth routes
+  if (isAuthRoute()) {
     return
   }
 
@@ -255,11 +293,15 @@ async function initializePermissions(): Promise<void> {
   }
 }
 
-// Auto-initialize on server-side import
+// Auto-initialize on server-side import (but skip on auth routes)
+// Note: This is a best-effort - permissions will be fetched when actually needed
 if (typeof window === "undefined") {
   // Fire and forget - don't block module loading
-  initializePermissions().catch((error) => {
-    console.error("[Permissions Service] Error during auto-initialization:", error)
-  })
+  // Only initialize if not on an auth route
+  if (!isAuthRoute()) {
+    initializePermissions().catch((error) => {
+      console.error("[Permissions Service] Error during auto-initialization:", error)
+    })
+  }
 }
 

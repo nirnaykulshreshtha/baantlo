@@ -460,7 +460,7 @@ export async function revokeRefreshToken(refreshToken: string) {
     throw createAuthClientError("missing_refresh_token")
   }
 
-  await request(
+  return request(
     AUTH_BACKEND_ROUTES.revoke,
     {
       method: "POST",

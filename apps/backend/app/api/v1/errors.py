@@ -44,7 +44,7 @@ ERROR_MESSAGES = {
     EMAIL_NOT_VERIFIED: "Please verify your email address before logging in. Check your inbox for a verification link.",
     PHONE_NOT_VERIFIED: "Please verify your phone number before logging in. Check your messages for a verification code.",
     RATE_LIMITED: "Too many attempts. Please wait a few minutes before trying again.",
-    USER_NOT_FOUND: "No account found with this email address. Please check your email or create a new account.",
+    USER_NOT_FOUND: "No account found with this credentials. Please check your credentials or create a new account.",
     INVALID_OTP: "Invalid verification code. Please check the code and try again.",
     CONSTRAINT_VIOLATION: "The provided data violates our constraints. Please check your input and try again.",
     EMAIL_IN_USE: "An account with this email address already exists. Please use a different email or try logging in.",

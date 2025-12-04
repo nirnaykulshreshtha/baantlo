@@ -57,6 +57,7 @@ export type ApiRequestOptions = {
   includeErrorDetails?: boolean
 }
 
+
 /**
  * Generic API request function that handles authentication, error handling, and response parsing.
  * @param path - API endpoint path (e.g., "/groups" or "/expenses/123")

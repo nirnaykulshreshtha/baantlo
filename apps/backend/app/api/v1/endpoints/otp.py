@@ -1,5 +1,6 @@
 import random
 import time
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from redis import Redis
 from ....core.redis import get_redis
@@ -9,7 +10,9 @@ from ....tasks.notify import send_sms_otp
 from sqlalchemy.orm import Session
 from ....db.deps import get_db
 from ....db.models import User, RefreshToken
-from ..errors import RATE_LIMITED, INVALID_OTP
+from ..errors import RATE_LIMITED, INVALID_OTP, USER_NOT_FOUND
+
+logger = logging.getLogger(__name__)
 from ....auth.flow import compute_next_action
 from ....auth.rbac import get_platform_permissions_for_roles
 from ....auth.tokens import create_access_token, create_refresh_token
@@ -53,10 +56,15 @@ def request_otp(body: OTPRequest, r: Redis = Depends(get_redis), db: Session = D
     # Increment metrics
     increment_metrics(r, "metrics:otp:sms_otp_request")
     
-    # Check if phone is already verified
+    # Check if user exists with this phone number
     phone = _canonical_phone(body.phone)
     user = db.query(User).filter(User.phone.in_([body.phone, phone])).first()
-    if user and user.phone_verified:
+    if not user:
+        log_auth_operation("request_otp", phone=body.phone, success=False, reason="user_not_found")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=USER_NOT_FOUND)
+    
+    # Check if phone is already verified
+    if user.phone_verified:
         # Phone is already verified, return next action
         action = compute_next_action(user, attempted_login=False)
         masked_phone = mask_phone(phone)

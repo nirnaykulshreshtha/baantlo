@@ -581,7 +581,7 @@ def verify_email_otp(body: EmailOTPVerifyRequest, r: Redis = Depends(get_redis),
 
 
 @router.post("/clear-rate-limits")
-def clear_rate_limits(email: str, r: Redis = Depends(get_redis)) -> dict[str, Any]:
+def clear_rate_limits(key: str, scope: str, email: str, r: Redis = Depends(get_redis)) -> dict[str, Any]:
     """
     Clear rate limit keys for testing purposes.
     Only available in development environment.
@@ -589,7 +589,7 @@ def clear_rate_limits(email: str, r: Redis = Depends(get_redis)) -> dict[str, An
     if settings.environment not in {"development", "dev", "local"}:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     
-    rk = f"login:rate:{email}"
+    rk = f"{key}:{scope}:{email}"
     deleted = r.delete(rk)
     
     logger.info("auth.rate_limits_cleared email=%s deleted=%s", email, deleted)

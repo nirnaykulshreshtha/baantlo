@@ -24,15 +24,23 @@ const envSchema = z.object({
 let backendUrl = process.env.BACKEND_API_URL || process.env.AUTH_BACKEND_URL
 
 // Detect if running in Docker (check for /app working directory or Docker-specific env vars)
+// Note: We avoid using 'fs' module here as this file is imported by client components
+// and 'fs' is only available in Node.js server-side code
 let isInDocker = false
-try {
-  isInDocker = 
-    process.cwd() === "/app" || 
-    process.env.DOCKER_CONTAINER === "true" ||
-    (process.platform !== "win32" && require("fs").existsSync("/.dockerenv"))
-} catch {
-  // If fs check fails, rely on working directory check
-  isInDocker = process.cwd() === "/app" || process.env.DOCKER_CONTAINER === "true"
+if (typeof window === "undefined") {
+  // Server-side only: can use process.cwd()
+  try {
+    isInDocker = 
+      process.cwd() === "/app" || 
+      process.env.DOCKER_CONTAINER === "true" ||
+      process.env.IS_DOCKER === "true"
+  } catch {
+    // Fallback to env var check only
+    isInDocker = process.env.DOCKER_CONTAINER === "true" || process.env.IS_DOCKER === "true"
+  }
+} else {
+  // Client-side: rely only on environment variables
+  isInDocker = process.env.NEXT_PUBLIC_IS_DOCKER === "true"
 }
 
 // Auto-fix: If in Docker and using localhost, replace with Docker service name
