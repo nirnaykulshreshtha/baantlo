@@ -11,6 +11,7 @@ import { SessionProvider } from "@/components/ui/providers/session-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { getThemePreference } from "@/lib/preferences/theme-actions"
 import { getThemeVariantPreference } from "@/lib/preferences/theme-variant-actions"
+import { getAllFontVariables } from "@/lib/fonts"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -27,7 +28,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       lang="en"
       suppressHydrationWarning
       data-theme-variant={themeVariantPreference}
-      className="font-sans antialiased"
+      className={`${getAllFontVariables()} font-sans antialiased`}
     >
       <head />
       <body>
