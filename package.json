@@ -1,0 +1,29 @@
+{
+  "name": "baant-lo-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Baant Lo - Expense splitting application monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/baantlo",
+    "dev:backend": "cd apps/backend && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "dev:frontend": "npm run dev --workspace=apps/baantlo",
+    "build": "npm run build --workspace=apps/baantlo",
+    "build:backend": "cd apps/backend && echo 'Backend build handled by Docker'",
+    "lint": "npm run lint --workspace=apps/baantlo",
+    "test": "npm run test --workspace=apps/baantlo",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0",
+    "prettier-plugin-organize-imports": "^3.0.0"
+  }
+}
+

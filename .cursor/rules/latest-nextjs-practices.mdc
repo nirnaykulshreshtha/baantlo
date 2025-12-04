@@ -1,0 +1,110 @@
+---
+alwaysApply: true
+---
+
+You are a senior Next.js engineer. Generate code and guidance that follow the latest stable Next.js (App Router) and React best practices.
+
+If there is any confusion or ambiguity, refer to https://nextjs.org/docs.
+
+Authentication
+- Use `next-auth@beta` (Auth.js v5): https://authjs.dev/getting-started/installation
+- Terminal:
+  npm i next-auth@beta
+- Root `auth.ts`:
+  import NextAuth from "next-auth"
+  export const { auth, signIn, signOut, handlers: { GET, POST } } = NextAuth({ providers:[/*...*/], callbacks:{/* role in session */} })
+- `app/api/auth/[...nextauth]/route.ts` re-exports `GET` and `POST` from `auth.ts`.
+- Use `auth()` in Server Components. Use `useSession()` in Client Components.
+
+UI
+- Shadcn UI install: https://ui.shadcn.com/docs/installation/next
+  npm dlx shadcn@latest init
+  npm dlx shadcn@latest add button input card dialog dropdown-menu form badge avatar navigation-menu sheet
+- Magic UI install: https://magicui.design/docs/installation
+  npm i magicui
+- Mix Shadcn primitives with Magic UI sections where it improves UX.
+
+Styling (Tailwind CSS)
+- Tailwind docs: https://tailwindcss.com/docs/installation/framework-guides/nextjs
+- Terminal:
+  pnpm i -D tailwindcss postcss autoprefixer
+  npx tailwindcss init -p
+- `tailwind.config.ts` content paths include App Router and shadcn:
+  content: ["./app/**/*.{ts,tsx}","./components/**/*.{ts,tsx}","./lib/**/*.{ts,tsx}"]
+  darkMode: ["class"]
+  plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")]
+- `app/globals.css` includes:
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+- Ensure `components.json` from shadcn exists and global CSS is imported in `app/layout.tsx`.
+
+Layout rules
+- Root `layout.tsx`: wrap `<html>` and `<body>`, ThemeProvider, SessionProvider, `next/font`, global styles. Minimal chrome only.
+- `(admin)/layout.tsx`: server component. Reads session via `auth()`. Renders AdminNav and slot. No client-only deps here.
+- `(user)/layout.tsx`: server component. Reads session via `auth()` for personalized nav. Public pages allowed unless route-gated.
+- `(auth)/layout.tsx`: blank, no nav. Use centered container. Never show user/admin chrome.
+
+Access control
+- Roles stored in session (e.g., `session.user.role`).
+- Middleware-based gate for entire groups:
+  - `/middleware.ts` checks pathname and role.
+  - Admin-only: paths under `/(admin)` require `role === 'admin'`.
+  - User-only pages can require an authenticated session.
+- Server-side enforcement inside layouts as defense-in-depth:
+  - In `(admin)/layout.tsx`, `const session = await auth(); if (!session || session.user.role !== 'admin') redirect('/sign-in')`
+  - In `(user)/layout.tsx`, `if (!session) redirect('/sign-in')`
+  - In `(auth)/layout.tsx`, if `session` exists, redirect to role home.
+- Do not put secrets in Client Components.
+
+Example middleware
+- Terminal:
+  npm i next/server
+- `middleware.ts`:
+  import { NextResponse } from 'next/server'
+  import { auth } from './auth'
+  export async function middleware(req: Request) {
+    const url = new URL(req.url)
+    const session = await auth()
+    const isAdmin = session?.user?.role === 'admin'
+    if (url.pathname.startsWith('/admin')) return isAdmin ? NextResponse.next() : NextResponse.redirect(new URL('/sign-in', req.url))
+    if (url.pathname.startsWith('/user')) return session ? NextResponse.next() : NextResponse.redirect(new URL('/sign-in', req.url))
+    return NextResponse.next()
+  }
+  export const config = { matcher: ['/admin/:path*','/user/:path*'] }
+
+Navigation and routes
+- Admin routes live under `app/(admin)`. Link to them as `/admin/...` using a parallel `app/admin` path segment that re-exports pages from the group for clean URLs:
+  app/
+    admin/
+      page.tsx          // `export { default } from '../(admin)/dashboard/page'`
+      users/page.tsx    // re-export pattern
+- Do the same for `/user` and `/auth` if you want stable URLs.
+
+Data fetching and performance
+- Default to Server Components.
+- Use `fetch` on the server with cache or revalidate per route.
+- Use `generateStaticParams` for static segments.
+- Stream with Suspense and route `loading.tsx`.
+
+Security
+- CSP and secure cookies. `NEXTAUTH_SECRET` required. OAuth secrets only server-side.
+- Validate all inputs in Server Actions or Route Handlers.
+
+Config and tooling
+- TypeScript strict, `eslint-config-next`, Prettier.
+- Tailwind configured by Shadcn CLI.
+- `.env.local` with provider keys and `NEXTAUTH_URL`.
+
+Deployment
+- Choose Edge or Node per route. If using NextAuth with certain providers or JWT crypto, prefer Node unless documented safe on Edge.
+- Verify caching and auth redirects in production.
+
+Output format
+- Provide terminal commands for installs and scaffolding.
+- Show `auth.ts`, `middleware.ts`, and all three `layout.tsx` files with minimal shells.
+- Provide one protected Admin page and one protected User page.
+- Provide one Auth page using Shadcn components.
+- Show an example Server Action and an API Route Handler.
+- Mark client boundaries and explain each caching or routing choice in 1–2 sentences.
+- Include local dev, testing, env, and deployment notes.

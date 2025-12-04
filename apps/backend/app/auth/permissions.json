@@ -1,0 +1,78 @@
+{
+  "platform_permissions": [
+    "user.read.self",
+    "user.update.self",
+    "user.read.any",
+    "user.manage",
+    "group.create",
+    "group.read.any",
+    "group.update.any",
+    "group.delete.any",
+    "admin.full_access"
+  ],
+  "group_permissions": [
+    "group.read.own",
+    "group.update.own",
+    "group.delete.own",
+    "group.invite",
+    "group.member.add",
+    "group.member.remove",
+    "expense.create",
+    "expense.read.group",
+    "expense.update.own",
+    "expense.delete.own",
+    "expense.update.any",
+    "expense.delete.any",
+    "settlement.create",
+    "settlement.read.group",
+    "settlement.approve",
+    "settlement.reject"
+  ],
+  "platform_roles": {
+    "PLATFORM_ADMIN": [
+      "user.read.self",
+      "user.update.self",
+      "group.create",
+      "admin.full_access",
+      "user.read.any",
+      "user.manage",
+      "group.read.any",
+      "group.update.any",
+      "group.delete.any"
+    ],
+    "BASIC_USER": [
+      "user.read.self",
+      "user.update.self",
+      "group.create"
+    ]
+  },
+  "group_roles": {
+    "owner": [
+      "group.read.own",
+      "group.update.own",
+      "group.delete.own",
+      "group.invite",
+      "group.member.add",
+      "group.member.remove",
+      "expense.create",
+      "expense.read.group",
+      "expense.update.own",
+      "expense.delete.own",
+      "expense.update.any",
+      "expense.delete.any",
+      "settlement.create",
+      "settlement.read.group",
+      "settlement.approve",
+      "settlement.reject"
+    ],
+    "member": [
+      "group.read.own",
+      "expense.create",
+      "expense.read.group",
+      "expense.update.own",
+      "expense.delete.own",
+      "settlement.create",
+      "settlement.read.group"
+    ]
+  }
+}

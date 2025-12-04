@@ -1,0 +1,20 @@
+from fastapi import APIRouter
+from .endpoints import ping, auth, users, groups, otp, profile, currencies, friends, admin, sync, expenses, balances, settlements, dashboard, groups_overview, subscription_plans
+
+api_router = APIRouter()
+api_router.include_router(ping.router, prefix="/ping", tags=["ping"])
+api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_router.include_router(otp.router, prefix="/auth", tags=["auth"])
+api_router.include_router(users.router, prefix="/users", tags=["users"])
+api_router.include_router(groups.router, prefix="/groups", tags=["groups"])
+api_router.include_router(groups_overview.router, prefix="/groups", tags=["groups"])
+api_router.include_router(friends.router, prefix="/friends", tags=["friends"])
+api_router.include_router(profile.router, prefix="/profile", tags=["profile"])
+api_router.include_router(currencies.router, prefix="/currencies", tags=["currencies"])
+api_router.include_router(expenses.router, prefix="/expenses", tags=["expenses"])
+api_router.include_router(balances.router, prefix="/balances", tags=["balances"])
+api_router.include_router(settlements.router, prefix="/settlements", tags=["settlements"])
+api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
+api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
+api_router.include_router(sync.router, prefix="/sync", tags=["sync"])
+api_router.include_router(subscription_plans.router, prefix="", tags=["subscription-plans"])

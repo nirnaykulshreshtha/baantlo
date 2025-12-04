@@ -1,0 +1,7 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Write modularized code i.e break long code into smaller chuncks, that helps in scalability, maintainability and readability.
+Write the code separated in services, helper functions, middlewares whenever it can be done. (for both new and existing).

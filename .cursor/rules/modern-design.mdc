@@ -1,0 +1,56 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Shared (Web + Mobile):
+
+Focus on content and tasks.
+
+Mobile-first, fluid layouts, logical breakpoints.
+
+Consistent tokens for color, spacing, type.
+
+Accessible (WCAG AA+).
+
+Clear states (loading, success, error).
+
+Touch-friendly ≥44px.
+
+Test across devices/tools.
+
+Optimize performance and security.
+
+Web (Next.js + Tailwind + shadcn/ui):
+
+Use shadcn/ui + Tailwind for UI.
+
+Mobile-first Grid/Flexbox, responsive type with clamp().
+
+CSS variables/tokens for themes.
+
+Core works without JS.
+
+Lint, Prettier, Lighthouse, accessibility checks.
+
+Control bundle size, compress assets, optimize images.
+
+Flutter:
+
+Material on Android, Cupertino on iOS.
+
+Responsive via LayoutBuilder, MediaQuery, OrientationBuilder.
+
+Extract lean widgets, use const.
+
+Scoped state management (Provider, Riverpod).
+
+Manage assets: compress, split builds, cache.
+
+Accessibility, localization, RTL.
+
+Offline caching/sync.
+
+Test at unit, widget, integration levels with CI.
+
+Encapsulate native integrations.

@@ -1,0 +1,13 @@
+.git
+node_modules
+**/node_modules
+**/.next
+**/build
+**/dist
+**/.dart_tool
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.mypy_cache
+**/.pytest_cache
+**/.DS_Store

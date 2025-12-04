@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Check for existing code before writing new logic. Reuse functions, components, and utilities. Extract small logic into helpers. Centralize shared logic in named utilities. Use reusable UI components. Run linters to detect duplication and refactor when found.

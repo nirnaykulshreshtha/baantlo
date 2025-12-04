@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Use latest stable versions. Pin in lockfiles. Review changelogs before major upgrades. Audit regularly for vulnerabilities. Remove unused packages. Automate updates (Renovate, Dependabot). Flutter: flutter pub outdated. JS/TS: npm audit or yarn audit.
