@@ -3,34 +3,38 @@
 /**
  * @file phone-input.tsx
  * @description Styled phone input that enforces numeric keypad where supported.
+ * Uses the unified FormInput component for consistent design language.
  */
 
 import { forwardRef } from "react"
 import { Phone } from "lucide-react"
 
-import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
+import { FormInput } from "@/components/auth/form-input"
+import type { FormInputProps } from "@/components/auth/form-input"
 
-export type PhoneInputProps = React.ComponentPropsWithoutRef<typeof Input> & {
+export type PhoneInputProps = Omit<FormInputProps, 'type' | 'leadingIcon'> & {
+  /**
+   * Whether to show the phone icon. Defaults to true.
+   */
   showIcon?: boolean
 }
 
+/**
+ * Phone input component with consistent spacing and design language.
+ * Wraps FormInput with phone-specific defaults.
+ */
 export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
-  ({ className, showIcon = true, ...props }, ref) => {
+  ({ showIcon = true, ...props }, ref) => {
     return (
-      <div className="relative">
-        {showIcon ? (
-          <Phone className="text-muted-foreground absolute left-3 top-2.5 h-4 w-4" aria-hidden />
-        ) : null}
-        <Input
-          ref={ref}
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          className={cn(showIcon ? "pl-9" : "", className)}
-          {...props}
-        />
-      </div>
+      <FormInput
+        ref={ref}
+        type="tel"
+        inputMode="tel"
+        autoComplete="tel"
+        leadingIcon={showIcon ? Phone : undefined}
+        showLeadingIcon={showIcon}
+        {...props}
+      />
     )
   }
 )

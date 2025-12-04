@@ -6,7 +6,7 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { PhoneInput } from "@/components/auth/phone-input"
 import { OtpInput } from "@/components/auth/otp-input"
 import { FormError } from "@/components/auth/form-error"
 import { FormSuccess } from "@/components/auth/form-success"
@@ -75,7 +75,7 @@ export function VerifyPhoneOtpForm({ initialPhone = "" }: VerifyPhoneOtpFormProp
                 <FormItem>
                   <FormLabel>Phone number</FormLabel>
                   <FormControl>
-                    <Input type="tel" placeholder="Enter phone with country code" {...field} />
+                    <PhoneInput placeholder="Enter phone with country code" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

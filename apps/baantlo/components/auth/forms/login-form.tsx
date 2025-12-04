@@ -148,7 +148,6 @@ export function LoginForm() {
                     <FormControl>
                       <EmailInput
                         placeholder="you@example.com"
-                        className="h-11"
                         {...field}
                       />
                     </FormControl>
@@ -174,7 +173,6 @@ export function LoginForm() {
                     <FormControl>
                       <PasswordInput
                         placeholder="Enter your password"
-                        className="h-11"
                         showMeter={false}
                         {...field}
                       />
@@ -188,7 +186,7 @@ export function LoginForm() {
 
               <Button
                 type="submit"
-                className="w-full h-11 text-base font-medium"
+                className="w-full text-base font-medium"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -236,8 +234,8 @@ export function LoginForm() {
           </div>
 
           <div className="w-full">
-            <AuthLink href="/verify-phone">
-              <Button variant="outline" className="w-full" size="sm">
+            <AuthLink href="/verify-phone" className="w-full">
+              <Button variant="outline" className="w-full">
                 <Phone className="mr-2 h-4 w-4" />
                 Sign in with phone
               </Button>

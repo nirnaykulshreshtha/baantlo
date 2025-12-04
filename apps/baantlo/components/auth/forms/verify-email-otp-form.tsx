@@ -6,7 +6,7 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { EmailInput } from "@/components/auth/email-input"
 import { OtpInput } from "@/components/auth/otp-input"
 import { FormError } from "@/components/auth/form-error"
 import { FormSuccess } from "@/components/auth/form-success"
@@ -75,7 +75,7 @@ export function VerifyEmailOtpForm({ initialEmail = "" }: VerifyEmailOtpFormProp
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="you@example.com" {...field} />
+                    <EmailInput placeholder="you@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

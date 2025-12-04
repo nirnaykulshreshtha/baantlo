@@ -28,10 +28,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { FormInput } from "@/components/auth/form-input"
 import { EmailInput } from "@/components/auth/email-input"
 import { PasswordInput } from "@/components/auth/password-input"
+import { PhoneInput } from "@/components/auth/phone-input"
 import { FormError } from "@/components/auth/form-error"
 import { FormSuccess } from "@/components/auth/form-success"
 import { AuthLink } from "@/components/auth/auth-link"
@@ -408,11 +409,11 @@ export function RegisterForm() {
                       <FormItem>
                         <FormLabel className="text-sm font-medium">Full name</FormLabel>
                         <FormControl>
-                          <Input
+                          <FormInput
+                            type="text"
                             placeholder="John Doe"
                             maxLength={64}
                             autoFocus
-                            className="h-11"
                             {...field}
                           />
                         </FormControl>
@@ -428,7 +429,7 @@ export function RegisterForm() {
                       <FormItem>
                         <FormLabel className="text-sm font-medium">Email address</FormLabel>
                         <FormControl>
-                          <EmailInput placeholder="you@example.com" className="h-11" {...field} />
+                          <EmailInput placeholder="you@example.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -450,7 +451,6 @@ export function RegisterForm() {
                           <PasswordInput
                             placeholder="Create a secure password"
                             autoFocus
-                            className="h-11"
                             {...field}
                           />
                         </FormControl>
@@ -471,7 +471,6 @@ export function RegisterForm() {
                           <PasswordInput
                             placeholder="Re-enter your password"
                             showMeter={false}
-                            className="h-11"
                             {...field}
                           />
                         </FormControl>
@@ -499,15 +498,10 @@ export function RegisterForm() {
                       control={form.control}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
-                            Phone number
-                          </FormLabel>
+                          <FormLabel className="text-sm font-medium">Phone number</FormLabel>
                           <FormControl>
-                            <Input
-                              type="tel"
+                            <PhoneInput
                               placeholder="+919999999999"
-                              className="h-11"
                               {...field}
                               onChange={(e) => {
                                 const value = e.target.value.replace(/[^\d+\-\s()]/g, "")
@@ -540,7 +534,7 @@ export function RegisterForm() {
                             disabled={isLoadingCurrencies}
                           >
                             <FormControl>
-                              <SelectTrigger className="h-11">
+                              <SelectTrigger>
                                 <SelectValue
                                   placeholder={
                                     isLoadingCurrencies
@@ -647,18 +641,17 @@ export function RegisterForm() {
                   variant="outline"
                   onClick={handleBack}
                   disabled={currentStep === 0 || isSubmitting}
-                  className="h-11"
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back
                 </Button>
                 {currentStep < TOTAL_STEPS - 1 ? (
-                  <Button type="button" onClick={handleNext} disabled={isSubmitting} className="h-11">
+                  <Button type="button" onClick={handleNext} disabled={isSubmitting}>
                     Continue
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button type="submit" disabled={isSubmitting} className="h-11">
+                  <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? "Creating account..." : "Create account"}
                     {!isSubmitting && <ArrowRight className="ml-2 h-4 w-4" />}
                   </Button>

@@ -3,34 +3,38 @@
 /**
  * @file email-input.tsx
  * @description Styled email input with optional leading icon.
+ * Uses the unified FormInput component for consistent design language.
  */
 
 import { forwardRef } from "react"
 import { Mail } from "lucide-react"
 
-import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
+import { FormInput } from "@/components/auth/form-input"
+import type { FormInputProps } from "@/components/auth/form-input"
 
-export type EmailInputProps = React.ComponentPropsWithoutRef<typeof Input> & {
+export type EmailInputProps = Omit<FormInputProps, 'type' | 'leadingIcon'> & {
+  /**
+   * Whether to show the email icon. Defaults to true.
+   */
   showIcon?: boolean
 }
 
+/**
+ * Email input component with consistent spacing and design language.
+ * Wraps FormInput with email-specific defaults.
+ */
 export const EmailInput = forwardRef<HTMLInputElement, EmailInputProps>(
-  ({ className, showIcon = true, ...props }, ref) => {
+  ({ showIcon = true, ...props }, ref) => {
     return (
-      <div className="relative">
-        {showIcon ? (
-          <Mail className="text-muted-foreground absolute left-3 top-2.5 h-4 w-4" aria-hidden />
-        ) : null}
-        <Input
-          ref={ref}
-          type="email"
-          autoComplete="email"
-          inputMode="email"
-          className={cn(showIcon ? "pl-9" : "", className)}
-          {...props}
-        />
-      </div>
+      <FormInput
+        ref={ref}
+        type="email"
+        autoComplete="email"
+        inputMode="email"
+        leadingIcon={showIcon ? Mail : undefined}
+        showLeadingIcon={showIcon}
+        {...props}
+      />
     )
   }
 )

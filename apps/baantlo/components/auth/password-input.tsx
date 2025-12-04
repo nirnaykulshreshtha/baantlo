@@ -3,15 +3,15 @@
 /**
  * @file password-input.tsx
  * @description Password input with visibility toggle and optional strength meter.
+ * Uses the unified FormInput component for consistent design language.
  */
 
-import { forwardRef, useMemo, useState } from "react"
-import { Eye, EyeOff } from "lucide-react"
+import { forwardRef, useMemo } from "react"
+import { Lock } from "lucide-react"
 
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { FormInput } from "@/components/auth/form-input"
 import { Progress } from "@/components/ui/progress"
-import { cn } from "@/lib/utils"
+import type { FormInputProps } from "@/components/auth/form-input"
 
 type PasswordStrength = {
   value: number
@@ -19,37 +19,36 @@ type PasswordStrength = {
   tone: "destructive" | "warning" | "success"
 }
 
-export type PasswordInputProps = React.ComponentPropsWithoutRef<typeof Input> & {
+export type PasswordInputProps = Omit<FormInputProps, 'type' | 'leadingIcon'> & {
+  /**
+   * Whether to show the password strength meter. Defaults to true.
+   */
   showMeter?: boolean
+  
+  /**
+   * Whether to show the lock icon. Defaults to true.
+   */
+  showIcon?: boolean
 }
 
+/**
+ * Password input component with automatic visibility toggle and optional strength meter.
+ * Wraps FormInput with password-specific defaults including a lock icon.
+ */
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
-  ({ className, value, showMeter = true, ...props }, ref) => {
-    const [isVisible, setIsVisible] = useState(false)
+  ({ value, showMeter = true, showIcon = true, ...props }, ref) => {
     const strength = useMemo(() => evaluateStrength(String(value ?? "")), [value])
 
     return (
       <div className="space-y-2">
-        <div className="relative">
-          <Input
-            ref={ref}
-            type={isVisible ? "text" : "password"}
-            autoComplete="current-password"
-            className={cn("pr-12", className)}
-            value={value}
-            {...props}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setIsVisible((prev) => !prev)}
-            className="text-muted-foreground absolute right-1 top-1/2 -translate-y-1/2"
-            aria-label={isVisible ? "Hide password" : "Show password"}
-          >
-            {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </Button>
-        </div>
+        <FormInput
+          ref={ref}
+          type="password"
+          autoComplete="current-password"
+          leadingIcon={showIcon ? Lock : undefined}
+          showLeadingIcon={showIcon}
+          {...props}
+        />
         {showMeter ? (
           <div className="space-y-1.5">
             <Progress value={strength.value} className="h-2" />
