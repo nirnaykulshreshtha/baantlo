@@ -1,9 +1,16 @@
-'use client'
+"use client"
 
 /**
  * @file register-form.tsx
- * @description Multi-step registration form with stepper UI.
+ * @description Modern multi-step registration form with clean stepper UI.
  * Fetches currencies from backend API and provides guided registration flow.
+ * 
+ * Design improvements:
+ * - Clean card-based layout
+ * - Improved step navigation with visual progress
+ * - Better mobile-first responsive design
+ * - Clearer form field hierarchy
+ * - Streamlined verification flows
  * 
  * Steps:
  * 1. Account Details (Name, Email)
@@ -15,6 +22,7 @@ import { useState, useTransition, useEffect, useMemo } from "react"
 import { z } from "zod"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { UserPlus, User, Lock, CheckCircle2, ArrowRight, ArrowLeft, Phone, Globe } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,9 +38,9 @@ import { AuthLink } from "@/components/auth/auth-link"
 import { VerificationBanner } from "@/components/auth/verification-banner"
 import { RequestEmailVerification } from "@/components/auth/request-email-verification"
 import { RequestPhoneOtp } from "@/components/auth/request-phone-otp"
-import { FormStepper } from "@/components/auth/form-stepper"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { cn } from "@/lib/utils"
 import { getSupportedCurrencies, type Currency } from "@/lib/currencies/api"
 
 import {
@@ -96,20 +104,23 @@ type VerificationState = {
 }
 
 /**
- * Registration form steps configuration.
+ * Registration form steps configuration with icons and descriptions.
  */
 const STEPS = [
   {
     title: "Account",
     description: "Basic information",
+    icon: User,
   },
   {
     title: "Security",
     description: "Password setup",
+    icon: Lock,
   },
   {
     title: "Complete",
     description: "Preferences & terms",
+    icon: CheckCircle2,
   },
 ] as const
 
@@ -326,303 +337,368 @@ export function RegisterForm() {
   // Watch form values for review step
   const formValues = form.watch()
 
+  const currentStepData = STEPS[currentStep]
+
   return (
-    <Card className="mx-auto w-full max-w-3xl shadow-none">
-      <CardHeader className="space-y-4">
-        <div>
-          <CardTitle className="text-2xl">Create your account</CardTitle>
-          <CardDescription className="mt-2">
-            Join Baantlo and manage shared expenses effortlessly.
-          </CardDescription>
-        </div>
-        <FormStepper steps={STEPS} currentStep={currentStep} />
-      </CardHeader>
+    <div className="w-full space-y-6">
+      {/* Step Progress Indicator */}
+      <div className="flex items-center justify-center gap-2">
+        {STEPS.map((step, index) => {
+          const StepIcon = step.icon
+          const isCompleted = index < currentStep
+          const isActive = index === currentStep
 
-      <CardContent className="space-y-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Step 1: Account Details */}
-            {currentStep === 0 && (
-              <div className="space-y-4 animate-in fade-in-50 duration-300">
-                <FormField
-                  name="displayName"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="John Doe"
-                          maxLength={64}
-                          autoFocus
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription className="text-xs">
-                        1-64 characters
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  name="email"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email address</FormLabel>
-                      <FormControl>
-                        <EmailInput placeholder="you@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          return (
+            <div key={step.title} className="flex items-center">
+              <div
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all",
+                  isCompleted
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : isActive
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-muted bg-muted text-muted-foreground"
+                )}
+              >
+                {isCompleted ? (
+                  <CheckCircle2 className="h-5 w-5" />
+                ) : (
+                  <StepIcon className="h-5 w-5" />
+                )}
               </div>
-            )}
-
-            {/* Step 2: Security */}
-            {currentStep === 1 && (
-              <div className="space-y-4 animate-in fade-in-50 duration-300">
-                <FormField
-                  name="password"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <PasswordInput placeholder="Create a secure password" autoFocus {...field} />
-                      </FormControl>
-                      <FormDescription className="text-xs">
-                        Must be at least 8 characters long
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
+              {index < STEPS.length - 1 && (
+                <div
+                  className={cn(
+                    "h-0.5 w-8 transition-colors md:w-12",
+                    isCompleted ? "bg-primary" : "bg-muted"
                   )}
                 />
-                <FormField
-                  name="confirmPassword"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm password</FormLabel>
-                      <FormControl>
-                        <PasswordInput placeholder="Re-enter your password" showMeter={false} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
+              )}
+            </div>
+          )
+        })}
+      </div>
 
-            {/* Step 3: Preferences & Terms */}
-            {currentStep === 2 && (
-              <div className="space-y-6 animate-in fade-in-50 duration-300">
-                {/* Optional Preferences */}
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium mb-4">Optional Preferences</h3>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      You can skip these and set them up later in your profile.
-                    </p>
-                  </div>
+      {/* Main Registration Card */}
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+        <CardHeader className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <UserPlus className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
+              <CardDescription className="mt-1">
+                Step {currentStep + 1} of {TOTAL_STEPS}: {currentStepData.title}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
 
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              {/* Step 1: Account Details */}
+              {currentStep === 0 && (
+                <div className="space-y-5">
                   <FormField
-                    name="phone"
+                    name="displayName"
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone number</FormLabel>
+                        <FormLabel className="text-sm font-medium">Full name</FormLabel>
                         <FormControl>
                           <Input
-                            type="tel"
-                            placeholder="+919999999999"
+                            placeholder="John Doe"
+                            maxLength={64}
+                            autoFocus
+                            className="h-11"
                             {...field}
-                            onChange={(e) => {
-                              const value = e.target.value.replace(/[^\d+\-\s()]/g, "")
-                              field.onChange(value)
-                            }}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">1-64 characters</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    name="email"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Email address</FormLabel>
+                        <FormControl>
+                          <EmailInput placeholder="you@example.com" className="h-11" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {/* Step 2: Security */}
+              {currentStep === 1 && (
+                <div className="space-y-5">
+                  <FormField
+                    name="password"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Password</FormLabel>
+                        <FormControl>
+                          <PasswordInput
+                            placeholder="Create a secure password"
+                            autoFocus
+                            className="h-11"
+                            {...field}
                           />
                         </FormControl>
                         <FormDescription className="text-xs">
-                          10-15 digits with country code
+                          Must be at least 8 characters long
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
                   <FormField
-                    name="preferredCurrency"
+                    name="confirmPassword"
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Preferred currency</FormLabel>
-                        <Select
-                          onValueChange={(value) => {
-                            field.onChange(value === "" ? undefined : value)
-                          }}
-                          value={field.value || ""}
-                          disabled={isLoadingCurrencies}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue
-                                placeholder={isLoadingCurrencies ? "Loading currencies..." : "Select currency (defaults to INR)"}
-                              />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {currencyOptions.length > 0 ? (
-                              currencyOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                                No currencies available
-                              </div>
-                            )}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription className="text-xs">
-                          Defaults to INR if not selected
-                        </FormDescription>
+                        <FormLabel className="text-sm font-medium">Confirm password</FormLabel>
+                        <FormControl>
+                          <PasswordInput
+                            placeholder="Re-enter your password"
+                            showMeter={false}
+                            className="h-11"
+                            {...field}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
+              )}
 
-                {/* Terms & Conditions */}
-                <div className="space-y-4 pt-4 border-t">
-                  <FormField
-                    name="acceptTerms"
-                    control={form.control}
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-start gap-3 rounded-lg border p-4 bg-muted/30">
+              {/* Step 3: Preferences & Terms */}
+              {currentStep === 2 && (
+                <div className="space-y-6">
+                  {/* Optional Preferences */}
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="text-sm font-semibold mb-1">Optional Preferences</h3>
+                      <p className="text-xs text-muted-foreground">
+                        You can skip these and set them up later in your profile.
+                      </p>
+                    </div>
+
+                    <FormField
+                      name="phone"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium flex items-center gap-2">
+                            <Phone className="h-4 w-4" />
+                            Phone number
+                          </FormLabel>
                           <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              id="accept-terms"
-                              className="mt-0.5"
+                            <Input
+                              type="tel"
+                              placeholder="+919999999999"
+                              className="h-11"
+                              {...field}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[^\d+\-\s()]/g, "")
+                                field.onChange(value)
+                              }}
                             />
                           </FormControl>
-                          <div className="space-y-1.5 flex-1">
-                            <FormLabel
-                              htmlFor="accept-terms"
-                              className="text-sm font-medium leading-none cursor-pointer"
-                            >
-                              Accept terms & privacy policy
-                            </FormLabel>
-                            <FormDescription className="text-xs leading-relaxed">
-                              By creating an account, you agree to Baantlo's Terms of Service and Privacy Policy.
-                              You can update your preferences at any time.
-                            </FormDescription>
-                          </div>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                          <FormDescription className="text-xs">
+                            10-15 digits with country code
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                {/* Review Summary */}
-                <div className="rounded-lg border bg-muted/20 p-4 space-y-2">
-                  <h3 className="text-sm font-semibold mb-3">Review your information</h3>
-                  <div className="space-y-1.5 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Name:</span>
-                      <span className="font-medium">{formValues.displayName || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Email:</span>
-                      <span className="font-medium">{formValues.email || "—"}</span>
-                    </div>
-                    {formValues.phone && (
+                    <FormField
+                      name="preferredCurrency"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium flex items-center gap-2">
+                            <Globe className="h-4 w-4" />
+                            Preferred currency
+                          </FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              field.onChange(value === "" ? undefined : value)
+                            }}
+                            value={field.value || ""}
+                            disabled={isLoadingCurrencies}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="h-11">
+                                <SelectValue
+                                  placeholder={
+                                    isLoadingCurrencies
+                                      ? "Loading currencies..."
+                                      : "Select currency (defaults to INR)"
+                                  }
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {currencyOptions.length > 0 ? (
+                                currencyOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                                  No currencies available
+                                </div>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription className="text-xs">
+                            Defaults to INR if not selected
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Terms & Conditions */}
+                  <div className="space-y-4 rounded-lg border border-border/50 bg-muted/30 p-4">
+                    <FormField
+                      name="acceptTerms"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-start gap-3">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                id="accept-terms"
+                                className="mt-0.5"
+                              />
+                            </FormControl>
+                            <div className="space-y-1.5 flex-1">
+                              <FormLabel
+                                htmlFor="accept-terms"
+                                className="text-sm font-medium leading-none cursor-pointer"
+                              >
+                                Accept terms & privacy policy
+                              </FormLabel>
+                              <FormDescription className="text-xs leading-relaxed">
+                                By creating an account, you agree to Baantlo's Terms of Service and
+                                Privacy Policy. You can update your preferences at any time.
+                              </FormDescription>
+                            </div>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Review Summary */}
+                  <div className="space-y-3 rounded-lg border border-border/50 bg-muted/30 p-4">
+                    <h3 className="text-sm font-semibold">Review your information</h3>
+                    <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Phone:</span>
-                        <span className="font-medium">{formValues.phone}</span>
+                        <span className="text-muted-foreground">Name:</span>
+                        <span className="font-medium">{formValues.displayName || "—"}</span>
                       </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Currency:</span>
-                      <span className="font-medium">
-                        {formValues.preferredCurrency || "INR (default)"}
-                      </span>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Email:</span>
+                        <span className="font-medium">{formValues.email || "—"}</span>
+                      </div>
+                      {formValues.phone && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Phone:</span>
+                          <span className="font-medium">{formValues.phone}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Currency:</span>
+                        <span className="font-medium">
+                          {formValues.preferredCurrency || "INR (default)"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Error and Success Messages */}
-            {serverError && <FormError message={serverError} />}
-            {success && <FormSuccess message={success} />}
+              {serverError && <FormError message={serverError} />}
+              {success && <FormSuccess message={success} />}
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between gap-4 pt-4 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleBack}
-                disabled={currentStep === 0 || isSubmitting}
-                className="min-w-[100px]"
-              >
-                Back
-              </Button>
-              {currentStep < TOTAL_STEPS - 1 ? (
+              {/* Navigation Buttons */}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/50 pt-5">
                 <Button
                   type="button"
-                  onClick={handleNext}
-                  disabled={isSubmitting}
-                  className="min-w-[100px]"
+                  variant="outline"
+                  onClick={handleBack}
+                  disabled={currentStep === 0 || isSubmitting}
+                  className="h-11"
                 >
-                  Continue
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
                 </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="min-w-[140px]"
-                >
-                  {isSubmitting ? "Creating account..." : "Create account"}
-                </Button>
+                {currentStep < TOTAL_STEPS - 1 ? (
+                  <Button type="button" onClick={handleNext} disabled={isSubmitting} className="h-11">
+                    Continue
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button type="submit" disabled={isSubmitting} className="h-11">
+                    {isSubmitting ? "Creating account..." : "Create account"}
+                    {!isSubmitting && <ArrowRight className="ml-2 h-4 w-4" />}
+                  </Button>
+                )}
+              </div>
+            </form>
+          </Form>
+
+          {/* Verification Flow */}
+          {hasVerification && (
+            <div className="mt-6 space-y-4 rounded-lg border border-border/50 bg-muted/30 p-4">
+              <VerificationBanner
+                type={verification!.flow.action === "verify_phone" ? "phone" : "email"}
+                message={verification!.flow.message}
+              />
+              {verification!.flow.action === "verify_email" && (
+                <RequestEmailVerification
+                  email={verification!.flow.email ?? "your email"}
+                  onRequest={handleRequestEmailVerification}
+                />
+              )}
+              {verification!.flow.action === "verify_phone" && (
+                <RequestPhoneOtp
+                  phone={verification!.flow.phone ?? "your phone"}
+                  onRequest={handleRequestPhoneOtp}
+                />
               )}
             </div>
-          </form>
-        </Form>
+          )}
+        </CardContent>
 
-        {/* Verification Flow */}
-        {hasVerification && (
-          <div className="space-y-4 animate-in fade-in-50 duration-300">
-            <VerificationBanner
-              type={verification!.flow.action === "verify_phone" ? "phone" : "email"}
-              message={verification!.flow.message}
-            />
-            {verification!.flow.action === "verify_email" && (
-              <RequestEmailVerification
-                email={verification!.flow.email ?? "your email"}
-                onRequest={handleRequestEmailVerification}
-              />
-            )}
-            {verification!.flow.action === "verify_phone" && (
-              <RequestPhoneOtp
-                phone={verification!.flow.phone ?? "your phone"}
-                onRequest={handleRequestPhoneOtp}
-              />
-            )}
+        <CardFooter className="flex flex-col gap-3 border-t border-border/50 pt-6">
+          <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
+            <span>Already have an account?</span>
+            <AuthLink href="/login" className="font-medium text-primary hover:underline">
+              Sign in
+            </AuthLink>
           </div>
-        )}
-      </CardContent>
-
-      <CardFooter className="justify-center text-sm text-muted-foreground border-t pt-6">
-        Already have an account? <AuthLink href="/login">Sign in</AuthLink>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </div>
   )
 }

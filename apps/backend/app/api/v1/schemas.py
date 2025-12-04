@@ -24,6 +24,13 @@ class RegisterRequest(BaseModel):
     preferred_currency: Optional[constr(min_length=3, max_length=3)] = None
 
 
+class RegisterPhoneRequest(BaseModel):
+    phone: constr(min_length=10, max_length=15)
+    display_name: Optional[constr(min_length=1, max_length=64)] = None
+    preferred_currency: Optional[constr(min_length=3, max_length=3)] = None
+    password: Optional[constr(min_length=8)] = None
+
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -241,4 +248,3 @@ class SettlementResponse(BaseModel):
     settled_at: Optional[datetime]
     created_by: str
     created_at: datetime
-

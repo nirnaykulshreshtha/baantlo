@@ -1,277 +1,267 @@
+"use client"
+
 /**
- * AuthShell Component for Baant Lo Application
+ * @file auth-shell.tsx
+ * @description Fully responsive authentication shell component that wraps all auth routes.
  * 
- * This component provides a beautiful, modern authentication layout with:
- * - Split-screen design with branding on the left
- * - Form content on the right
+ * Features:
+ * - Mobile-first responsive design with split layout on larger screens
+ * - Marketing/features panel on left (hidden on mobile, shown on tablet+)
+ * - Form content area on right (full width on mobile, constrained on desktop)
+ * - Dynamic theme variant gradients
  * - Animated trust messages
- * - Feature highlights
- * - Responsive design for mobile and desktop
- * - Modern glassmorphism effects
- * - Fully theme-dependent design using CSS variables that adapt to theme variants
- * - Dynamic colors that change with theme variants (default, natural, bubblegum, majestic)
- * - Minimal theme and theme variant toggles in top-right corner (form side only)
- * - Consistent with application design system
+ * - Theme controls in header
  * 
- * @author Baantlo Development Team
- * @created 2025-01-27
- * @updated 2025-01-27
+ * Layout behavior:
+ * - Mobile (< 768px): Single column, form-first, minimal chrome
+ * - Tablet (768px - 1024px): Split layout with reduced marketing panel
+ * - Desktop (> 1024px): Full split layout with expanded marketing panel
  */
 
-"use client";
-
-import React, { useMemo, useEffect, useState } from "react";
-import { ShieldCheck, Users, Wallet, Sparkles } from "lucide-react";
-import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
-import { ThemeToggle } from "@/components/common/theme-toggle";
-import { ThemeVariantToggle } from "@/components/common/theme-variant-toggle";
-import BrandLogo from "@/components/common/brand-logo";
-import type { ThemeVariant } from "@/lib/preferences/theme-variant";
+import { useEffect, useState } from "react"
+import { ShieldCheck, Users, Sparkles, TrendingUp, Zap, CheckCircle2 } from "lucide-react"
+import { ThemeToggle } from "@/components/common/theme-toggle"
+import { ThemeVariantToggle } from "@/components/common/theme-variant-toggle"
+import BrandLogo from "@/components/common/brand-logo"
+import { cn } from "@/lib/utils"
+import { themeVariantOptions, type ThemeVariant } from "@/lib/preferences/theme-variant"
 
 type Props = {
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-  currentThemeVariant?: ThemeVariant;
-};
+  title: string
+  subtitle?: string
+  children: React.ReactNode
+  currentThemeVariant?: ThemeVariant
+}
+
+const features = [
+  {
+    title: "Split with ease",
+    subtitle: "Split bills, Settle up in seconds",
+    icon: TrendingUp,
+    color: "from-blue-500/20 to-cyan-500/20",
+  },
+  {
+    title: "Secure & private",
+    subtitle: "Encryption keeps you safe",
+    icon: ShieldCheck,
+    color: "from-emerald-500/20 to-teal-500/20",
+  },
+  {
+    title: "Smart insights",
+    subtitle: "Reports and Spending analytics",
+    icon: Zap,
+    color: "from-purple-500/20 to-pink-500/20",
+  },
+]
+
+const themeVariantGradients: Record<ThemeVariant, string> = {
+  default: "linear-gradient(135deg,#4f46e5,#0ea5e9)",
+  natural: "linear-gradient(135deg,#2f855a,#68d391)",
+  bubblegum: "linear-gradient(135deg,#f472b6,#fb7185)",
+  majestic: "linear-gradient(135deg,#a855f7,#c084fc)",
+  bourbon: "linear-gradient(135deg,#bf4d24,#f97316)",
+  perpetuity: "linear-gradient(135deg,#0ea5e9,#06b6d4)",
+  brink: "linear-gradient(135deg,#6366f1,#22d3ee)",
+}
+
+const trustMessages = [
+  { text: "Trusted by thousands of flatmates across India", icon: Users },
+  { text: "Privacy-first. Your data always stays yours", icon: ShieldCheck },
+  { text: "Built for modern teams and groups", icon: Sparkles },
+  { text: "Secure, reliable, and joyfully fast", icon: Zap },
+]
 
 /**
- * AuthShell Component
+ * Fully responsive authentication shell component.
  * 
- * Provides a modern authentication layout with split-screen design,
- * branding, feature highlights, and animated trust messages.
+ * Provides a modern split-screen layout on larger devices with:
+ * - Left panel: Marketing content, features, and trust messages
+ * - Right panel: Authentication forms and content
  * 
- * @param title - The main title for the auth page
- * @param subtitle - Optional subtitle text
- * @param children - The form content to render
- * @param currentThemeVariant - Current theme variant preference
- * @returns The authentication shell layout
+ * On mobile devices, the layout stacks vertically with the form taking priority.
+ * 
+ * @param props.title - Main brand title
+ * @param props.subtitle - Optional brand subtitle
+ * @param props.children - Auth form content to render
+ * @param props.currentThemeVariant - Current theme variant for gradient styling
  */
-export default function AuthShell({ title, subtitle, children, currentThemeVariant }: Props) {
-  const trustMessages = useMemo(
-    () => [
-      "Trusted by thousands of flatmates across India",
-      "Privacy-first. Your data stays yours",
-      "Fast, reliable, and secure bill splitting",
-      "Seamless expense tracking and settlements",
-    ],
-    [],
-  );
+export default function AuthShell({ title, subtitle, children, currentThemeVariant = "default" }: Props) {
+  const [trustIdx, setTrustIdx] = useState(0)
+  const [mounted, setMounted] = useState(false)
 
-  const featureHighlights = useMemo(
-    () => [
-      {
-        icon: Users,
-        title: "Split bills",
-        subtitle: "Create groups & settle instantly",
-        delay: 0.1,
-      },
-      {
-        icon: Wallet,
-        title: "Track expenses",
-        subtitle: "Smart categories & reminders",
-        delay: 0.2,
-      },
-      {
-        icon: ShieldCheck,
-        title: "Secure settling",
-        subtitle: "Bank-grade protection",
-        delay: 0.3,
-      },
-    ],
-    [],
-  );
-
-  const accentStyles = useMemo(
-    () =>
-      ({
-        "--auth-shell-flare-1": "color-mix(in oklch, var(--color-primary) 32%, transparent)",
-        "--auth-shell-flare-2": "color-mix(in oklch, var(--color-accent) 26%, transparent)",
-        "--auth-shell-flare-3": "color-mix(in oklch, var(--color-secondary) 20%, transparent)",
-        "--auth-shell-surface": "color-mix(in oklch, var(--color-card) 88%, var(--color-primary) 12%)",
-        "--auth-shell-surface-soft":
-          "color-mix(in oklch, var(--color-card) 82%, var(--color-secondary) 18%)",
-        "--auth-shell-ring": "color-mix(in oklch, var(--color-border) 70%, var(--color-primary) 30%)",
-      }) as React.CSSProperties,
-    [],
-  );
-
-  const [trustIdx, setTrustIdx] = useState(0);
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const id = setInterval(() => {
-      setTrustIdx((v) => (v + 1) % trustMessages.length);
-    }, 3000);
-    return () => clearInterval(id);
-  }, [trustMessages.length]);
+      setTrustIdx((prev) => (prev + 1) % trustMessages.length)
+    }, 3500)
+    return () => clearInterval(id)
+  }, [])
+
+  const gradient = themeVariantGradients[currentThemeVariant] || themeVariantGradients.default
 
   return (
-    <div className="min-h-screen bg-background text-foreground" style={accentStyles}>
-      <div className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        {/* Marketing / Left Panel */}
-        <div className="relative hidden overflow-hidden lg:flex">
-          <div
-            className="absolute inset-0 opacity-95"
-            style={{
-              background:
-                "radial-gradient(140% 120% at -20% -20%, var(--auth-shell-flare-1) 0%, transparent 70%), radial-gradient(120% 120% at 110% -10%, var(--auth-shell-flare-2) 0%, transparent 72%), radial-gradient(120% 140% at 50% 115%, var(--auth-shell-flare-3) 0%, transparent 80%)",
-            }}
-          />
-          <div className="absolute inset-0 bg-card/80 backdrop-blur-[60px]" />
-          {/* Theme-aware gradient overlay for left panel - visible in both light and dark */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-muted/30 via-muted/15 to-muted/8 dark:from-background/10 dark:via-background/5 dark:to-background/7" />
-          <div
-            className="absolute inset-y-0 right-0 w-px opacity-50"
-            style={{
-              background: "linear-gradient(to bottom, transparent, hsl(var(--border)), transparent)",
-            }}
-          />
-
-          <div className="relative z-10 flex w-full flex-col justify-between px-12 pb-14 pt-16 xl:px-16 xl:pt-20">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              <Link
-                href="/"
-                className="group flex items-center gap-3 text-card-foreground transition-colors hover:text-foreground"
-              >
-                <motion.span
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border shadow-sm transition-all duration-300 group-hover:shadow-md p-1.5"
-                  whileHover={{ scale: 1.05, rotate: 6 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <BrandLogo className="h-full w-full" />
-                </motion.span>
-                <div className="text-lg font-semibold tracking-tight sm:text-xl">
-                  {process.env.NEXT_PUBLIC_BRAND_NAME || "Baant Lo"}
-                </div>
-              </Link>
-            </motion.div>
-
-            <motion.div
-              className="mt-16 space-y-6"
-              initial={{ opacity: 0, y: 32 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.18 }}
-            >
-              <motion.span
-                className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em]"
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.24 }}
-              >
-                <motion.span
-                  className="inline-flex h-1.5 w-1.5 rounded-full bg-primary"
-                  animate={{ opacity: [0.6, 1, 0.6] }}
-                  transition={{ duration: 1.8, repeat: Infinity }}
-                />
-                Early access
-              </motion.span>
-
-              <div className="space-y-4">
-                <h1 className="text-balance text-[clamp(2.2rem,2.8vw,2.85rem)] font-semibold leading-tight tracking-tight text-card-foreground">
-                  {title}
-                </h1>
-                {subtitle && (
-                  <p className="max-w-md text-sm leading-relaxed text-muted-foreground/90">
-                    {subtitle}
-                  </p>
-                )}
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3"
-              initial={{ opacity: 0, y: 26 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.32 }}
-            >
-              {featureHighlights.map((feature) => (
-                <motion.div
-                  key={feature.title}
-                  className="group relative overflow-hidden rounded-xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-                  initial={{ opacity: 0, y: 18, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.4 + feature.delay }}
-                  whileHover={{ y: -6 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  <div
-                    className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg"
-                    style={{ background: "var(--auth-shell-surface-soft)" }}
-                  >
-                    <feature.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="text-sm font-semibold tracking-tight text-card-foreground">
-                    {feature.title}
-                  </div>
-                  <div className="mt-2 text-sm text-muted-foreground/90">
-                    {feature.subtitle}
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            <motion.div
-              className="mt-12 flex items-center gap-3 border-t pt-8"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.52 }}
-            >
-              <motion.div
-                className="flex h-9 w-9 items-center justify-center rounded-full border shadow-sm"
-                whileHover={{ scale: 1.05, rotate: 4 }}
-              >
-                <Sparkles className="h-4 w-4 text-primary" />
-              </motion.div>
-              <div className="relative h-6 flex-1 overflow-hidden text-xs font-medium text-muted-foreground">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={trustIdx}
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 0.9, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                  className="text-xs font-medium text-muted-foreground"
-                >
-                  {trustMessages[trustIdx]}
-                </motion.div>
-                </AnimatePresence>
-              </div>
-            </motion.div>
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* Header - Mobile-first, always visible */}
+      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border/40 bg-background/80 px-4 py-3 backdrop-blur-sm sm:px-6 lg:px-8">
+        <div className="flex items-center gap-2">
+          <BrandLogo className="h-6 w-6 sm:h-7 sm:w-7" />
+          <div className="flex flex-col">
+            <h1 className="text-sm font-semibold leading-tight sm:text-base">{title}</h1>
+            {subtitle && (
+              <p className="hidden text-xs text-muted-foreground sm:block">{subtitle}</p>
+            )}
           </div>
         </div>
-
-        {/* Form / Right Panel */}
-        <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden px-5 py-14 sm:px-10">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-80"
-            style={{
-              background:
-                "radial-gradient(110% 140% at 100% 0%, var(--auth-shell-flare-2) 0%, transparent 70%), radial-gradient(120% 120% at 0% 100%, var(--auth-shell-flare-1) 0%, transparent 75%)",
-            }}
-          />
-          {/* Theme-aware gradient overlay for right panel - visible in both light and dark */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-muted/30 via-muted/15 to-muted/8 dark:from-background/10 dark:via-background/5 dark:to-background/7" />
-
-          <motion.div
-            className="absolute top-4 right-4 z-20 flex items-center gap-2 sm:top-8 sm:right-8"
-            initial={{ opacity: 0, scale: 0.82 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.12 }}
-          >
-            <ThemeVariantToggle currentVariant={currentThemeVariant} variant="ghost" size="icon-sm" />
-            <ThemeToggle variant="ghost" size="icon-sm" />
-          </motion.div>
-
-          <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-2 py-4 sm:px-2 lg:px-2">
-            {children}
-          </main>
+        <div className="flex items-center gap-1">
+          <ThemeToggle variant="ghost" size="icon-sm" />
+          <ThemeVariantToggle currentVariant={currentThemeVariant} variant="ghost" size="icon-sm" />
         </div>
-      </div>
+      </header>
+
+      {/* Main content area - Responsive split layout */}
+      <main className="flex flex-1 flex-col lg:flex-row">
+        {/* Marketing/Features Panel - Hidden on mobile, visible on tablet+ */}
+        <aside
+          className={cn(
+            "hidden lg:flex lg:w-1/2 lg:flex-col",
+            "relative overflow-hidden",
+            "bg-background"
+          )}
+        >
+          {/* Elegant background with sophisticated elements */}
+          <div className="absolute inset-0 -z-10 overflow-hidden">
+            {/* Refined gradient accent on right edge */}
+            <div
+              className="absolute right-0 top-0 bottom-0 w-2/5 opacity-[0.06]"
+              style={{
+                background: `linear-gradient(to left, ${gradient}, transparent)`,
+              }}
+            />
+            
+            {/* Elegant gradient orbs with smooth positioning */}
+            <div
+              className="absolute -right-1/4 top-1/3 h-[500px] w-[500px] rounded-full opacity-[0.12] blur-3xl transition-opacity duration-1000"
+              style={{
+                background: gradient,
+              }}
+            />
+            <div
+              className="absolute right-1/3 -bottom-1/4 h-[400px] w-[400px] rounded-full opacity-[0.08] blur-3xl transition-opacity duration-1000"
+              style={{
+                background: gradient,
+              }}
+            />
+            
+            {/* Subtle grid pattern for texture */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.015)_1px,transparent_1px)] bg-[size:40px_40px] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)]" />
+            
+            {/* Subtle dot pattern overlay */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.02)_1px,transparent_0)] bg-[size:32px_32px] dark:bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.02)_1px,transparent_0)] opacity-50" />
+          </div>
+
+          {/* Content container */}
+          <div className="relative z-10 flex flex-1 flex-col px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-12 xl:px-12">
+            {/* Elegant top section with refined divider */}
+            <div className="mb-8">
+              <div className="flex items-center gap-4">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/60 to-border/30" />
+                <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-border/40 bg-card/40 backdrop-blur-md shadow-sm">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
+                    <Sparkles className="h-3 w-3 text-primary" />
+                  </div>
+                  <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Why choose us
+                  </span>
+                </div>
+                <div className="h-px flex-1 bg-gradient-to-r from-border/30 via-border/60 to-transparent" />
+              </div>
+            </div>
+
+            {/* Features Section with elegant spacing */}
+            <div className="flex-1 space-y-5 max-w-lg mx-auto w-full">
+              {features.map((feature, idx) => {
+                const Icon = feature.icon
+                return (
+                  <div
+                    key={idx}
+                    className={cn(
+                      "group relative rounded-2xl border border-border/40 bg-card/50 backdrop-blur-md p-4",
+                      "transition-all duration-500 ease-out",
+                      "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10",
+                      "hover:bg-card/70 hover:-translate-y-0.5",
+                      "before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-primary/0 before:via-primary/0 before:to-primary/5",
+                      "before:opacity-0 before:transition-opacity before:duration-500",
+                      "hover:before:opacity-100"
+                    )}
+                  >
+                    <div className="relative flex items-start gap-5">
+                      <div className="flex-shrink-0">
+                        <div className="relative">
+                          <div className="absolute inset-0 rounded-xl bg-primary/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                          <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary transition-all duration-500 group-hover:scale-110 group-hover:from-primary/20 group-hover:to-primary/10">
+                            <Icon className="h-6 w-6 transition-transform duration-500 group-hover:scale-110" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-1 space-y-2 pt-1">
+                        <h3 className="text-lg font-semibold tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary/90">
+                          {feature.title}
+                        </h3>
+                        <p className="text-sm leading-relaxed text-muted-foreground/90">
+                          {feature.subtitle}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Elegant bottom section - Trust message */}
+            <div className="mt-8">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/60 to-border/30" />
+                <div className="flex h-6 w-6 items-center justify-center rounded-full border border-border/40 bg-card/40">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground/70" />
+                </div>
+                <div className="h-px flex-1 bg-gradient-to-r from-border/30 via-border/60 to-transparent" />
+              </div>
+              <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-card/50 backdrop-blur-md p-6 shadow-sm max-w-lg mx-auto w-full transition-all duration-500 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5">
+                {mounted && trustMessages[trustIdx] && (
+                  <div
+                    key={trustIdx}
+                    className="flex items-center gap-5 transition-all duration-500 ease-in-out animate-slide-up-fade"
+                  >
+                    <div className="flex-shrink-0">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary">
+                        {(() => {
+                          const TrustIcon = trustMessages[trustIdx].icon
+                          return <TrustIcon className="h-5 w-5" />
+                        })()}
+                      </div>
+                    </div>
+                    <p className="flex-1 text-sm font-medium leading-relaxed text-foreground">
+                      {trustMessages[trustIdx].text}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Form Content Area - Full width on mobile, constrained on desktop */}
+        <section className="flex flex-1 flex-col items-center justify-center px-4 py-6 sm:px-6 sm:py-8 lg:w-1/2 lg:px-8 lg:py-12 xl:px-12 bg-muted/40">
+          <div className="w-full max-w-lg space-y-6">
+            {/* Auth form content */}
+            <div className="w-full">{children}</div>
+          </div>
+        </section>
+      </main>
     </div>
-  );
+  )
 }
+

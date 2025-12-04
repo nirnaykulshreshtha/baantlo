@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status, Body, Request
 import logging
+import secrets
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from ....db.deps import get_db
@@ -54,7 +55,16 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-from ..schemas import RegisterRequest, LoginRequest, TokenResponse, ForgotPasswordRequest, ResetPasswordRequest, EmailOTPRequest, EmailOTPVerifyRequest
+from ..schemas import (
+    RegisterRequest,
+    RegisterPhoneRequest,
+    LoginRequest,
+    TokenResponse,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    EmailOTPRequest,
+    EmailOTPVerifyRequest,
+)
 
 
 @router.post("/token", response_model=TokenResponse)
@@ -214,6 +224,91 @@ def register(body: RegisterRequest, request: Request, db: Session = Depends(get_
     log_auth_operation("register", user_id=user.id, email=body.email, 
                       duration=duration, success=True)
     
+    return response
+
+
+@router.post("/register-phone")
+def register_phone(
+    body: RegisterPhoneRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    r: Redis = Depends(get_redis),
+) -> dict[str, Any]:
+    """
+    Register a phone-first account.
+
+    Stores a phone-only user record (email optional) and kick-starts the
+    verification flow so the client can request/verify an OTP.
+    """
+    import time
+    start_time = time.time()
+
+    increment_metrics(r, "metrics:auth:register_phone_attempts")
+
+    client_ip = request.client.host if request.client else "unknown"
+    phone_key = create_rate_limit_key("register_phone", body.phone)
+    ip_key = create_rate_limit_key("register_phone", client_ip, scope="ip")
+
+    phone_allowed, _, _ = check_rate_limit(
+        r,
+        phone_key,
+        RateLimitConfig.REGISTER_WINDOW,
+        RateLimitConfig.REGISTER_MAX_ATTEMPTS,
+        "register_phone",
+    )
+    ip_allowed, _, _ = check_rate_limit(
+        r,
+        ip_key,
+        RateLimitConfig.REGISTER_WINDOW,
+        RateLimitConfig.REGISTER_MAX_ATTEMPTS_PER_IP,
+        "register_ip",
+    )
+
+    if not phone_allowed or not ip_allowed:
+        increment_metrics(r, "metrics:auth:register_rate_limit_hits")
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=RATE_LIMITED)
+
+    existing_user = db.query(User).filter(User.phone == body.phone).first()
+    if existing_user:
+        log_auth_operation(
+            "register_phone",
+            phone=body.phone,
+            success=False,
+            reason="phone_in_use",
+        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=PHONE_IN_USE)
+
+    raw_password = body.password or secrets.token_urlsafe(32)
+    user = User(
+        email=None,
+        hashed_password=hash_password(raw_password),
+        display_name=body.display_name,
+        phone=body.phone,
+        preferred_currency=body.preferred_currency or "INR",
+        email_verified=True,
+    )
+    db.add(user)
+
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        msg = str(exc.orig)
+        if "phone" in msg or "ix_users_phone" in msg:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=PHONE_IN_USE)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=CONSTRAINT_VIOLATION)
+
+    response = handle_verification_flow(user, db, attempted_login=False)
+
+    duration = time.time() - start_time
+    log_auth_operation(
+        "register_phone",
+        user_id=user.id,
+        phone=body.phone,
+        duration=duration,
+        success=True,
+    )
+
     return response
 
 

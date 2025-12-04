@@ -31,7 +31,7 @@ export type Currency = z.infer<typeof CurrencySchema>
  */
 export async function getSupportedCurrencies(): Promise<Currency[]> {
   const baseUrl = env.BACKEND_API_URL.replace(/\/+$/, "")
-  const url = `${baseUrl}/api/v1/currencies`
+  const url = `${baseUrl}/currencies`
 
   console.log("[Currencies API] Fetching currencies from:", url)
 
@@ -48,6 +48,7 @@ export async function getSupportedCurrencies(): Promise<Currency[]> {
     })
 
     if (!response.ok) {
+      console.log("[Currencies API] Failed to fetch currencies:", url)
       throw new Error(
         `Failed to fetch currencies: ${response.status} ${response.statusText}`
       )

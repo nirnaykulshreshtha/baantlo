@@ -19,7 +19,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=generate_id)
-    email: Mapped[str] = mapped_column(String, unique=True, index=True)
+    email: Mapped[str | None] = mapped_column(String, unique=True, index=True, nullable=True)
     hashed_password: Mapped[str] = mapped_column(String)
     role: Mapped[str] = mapped_column(String, default=PlatformRole.BASIC_USER)
     phone: Mapped[str | None] = mapped_column(String, unique=True, index=True, nullable=True)
@@ -34,4 +34,3 @@ class User(Base):
     notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
     groups: Mapped[list["GroupMember"]] = relationship("GroupMember", back_populates="user", foreign_keys="GroupMember.user_id")
-

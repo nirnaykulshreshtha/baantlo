@@ -1,14 +1,27 @@
-'use client'
+"use client"
+
+/**
+ * @file login-form.tsx
+ * @description Modern, clean login form with email/password authentication.
+ * Features a streamlined card-based design optimized for mobile-first experience.
+ * 
+ * Design principles:
+ * - Minimal visual clutter
+ * - Clear visual hierarchy
+ * - Mobile-first responsive layout
+ * - Accessible form controls
+ * - Smooth error handling and verification flows
+ */
 
 import { useState, useTransition } from "react"
 import { z } from "zod"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
+import { LogIn, Phone, ArrowRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Separator } from "@/components/ui/separator"
 import { EmailInput } from "@/components/auth/email-input"
 import { PasswordInput } from "@/components/auth/password-input"
 import { FormError } from "@/components/auth/form-error"
@@ -19,6 +32,7 @@ import { RequestEmailVerification } from "@/components/auth/request-email-verifi
 import { RequestPhoneOtp } from "@/components/auth/request-phone-otp"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { cn } from "@/lib/utils"
 
 import { loginAction, requestEmailVerificationAction, requestPhoneOtpAction } from "@/lib/auth/actions"
 import { resolveDefaultRedirectPath } from "@/lib/auth/constants"
@@ -107,75 +121,138 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-md shadow-none">
-      <CardHeader className="space-y-2">
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
-        <CardDescription>Sign in to access your workspace.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <FormField
-              name="email"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <EmailInput placeholder="you@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="password"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Password</FormLabel>
-                    <AuthLink href="/forgot-password" className="text-xs">
-                      Forgot password?
-                    </AuthLink>
-                  </div>
-                  <FormControl>
-                    <PasswordInput placeholder="********" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {serverError ? <FormError message={serverError} /> : null}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Signing in..." : "Sign in"}
-            </Button>
-          </form>
-        </Form>
-
-        {hasVerification ? <Separator /> : null}
-
-        {hasVerification ? (
-          <div className="space-y-4">
-            <VerificationBanner
-              type={verification!.flow.action === "verify_phone" ? "phone" : "email"}
-              message={verification!.flow.message}
-            />
-            {renderVerificationContent(verification!, {
-              onRequestEmailVerification: handleRequestEmailVerification,
-              onRequestPhoneOtp: handleRequestPhoneOtp,
-            })}
+    <div className="w-full space-y-6">
+      {/* Main Login Card */}
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+        <CardHeader className="space-y-2 text-center sm:text-left">
+          <div className="flex items-center justify-center gap-3 sm:justify-start">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <LogIn className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+              <CardDescription className="mt-1">Sign in to your account to continue</CardDescription>
+            </div>
           </div>
-        ) : null}
-      </CardContent>
-      <CardFooter className="justify-center text-sm text-muted-foreground">
-        <span>Need an account?</span>
-        <AuthLink href="/register">Create one</AuthLink>
-      </CardFooter>
-    </Card>
+        </CardHeader>
+
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+              <FormField
+                name="email"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Email address</FormLabel>
+                    <FormControl>
+                      <EmailInput
+                        placeholder="you@example.com"
+                        className="h-11"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                name="password"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-sm font-medium">Password</FormLabel>
+                      <AuthLink
+                        href="/forgot-password"
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        Forgot password?
+                      </AuthLink>
+                    </div>
+                    <FormControl>
+                      <PasswordInput
+                        placeholder="Enter your password"
+                        className="h-11"
+                        showMeter={false}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {serverError && <FormError message={serverError} />}
+
+              <Button
+                type="submit"
+                className="w-full h-11 text-base font-medium"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="mr-2">Signing in...</span>
+                  </>
+                ) : (
+                  <>
+                    Sign in
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
+
+          {/* Verification Flow */}
+          {hasVerification && (
+            <div className="mt-6 space-y-4 rounded-lg border border-border/50 bg-muted/30 p-4">
+              <VerificationBanner
+                type={verification!.flow.action === "verify_phone" ? "phone" : "email"}
+                message={verification!.flow.message}
+              />
+              {renderVerificationContent(verification!, {
+                onRequestEmailVerification: handleRequestEmailVerification,
+                onRequestPhoneOtp: handleRequestPhoneOtp,
+              })}
+            </div>
+          )}
+        </CardContent>
+
+        <CardFooter className="flex flex-col gap-3 border-t border-border/50 pt-6">
+          <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
+            <span>Don't have an account?</span>
+            <AuthLink href="/register" className="font-medium text-primary hover:underline">
+              Create one
+            </AuthLink>
+          </div>
+
+          {/* Alternative Login Options */}
+          <div className="flex w-full items-center gap-3 pt-2">
+            <div className="flex-1 border-t border-border/50" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="flex-1 border-t border-border/50" />
+          </div>
+
+          <div className="w-full">
+            <AuthLink href="/verify-phone">
+              <Button variant="outline" className="w-full" size="sm">
+                <Phone className="mr-2 h-4 w-4" />
+                Sign in with phone
+              </Button>
+            </AuthLink>
+          </div>
+        </CardFooter>
+      </Card>
+    </div>
   )
 }
 
+/**
+ * Renders verification content based on the verification flow action.
+ * Provides clean, accessible UI for email and phone verification steps.
+ */
 function renderVerificationContent(
   state: VerificationState,
   handlers: {
@@ -189,21 +266,21 @@ function renderVerificationContent(
   switch (action) {
     case "verify_email":
       return (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <RequestEmailVerification
             email={flow.email ?? "your email"}
             onRequest={handlers.onRequestEmailVerification}
           />
-          <div className="flex flex-col items-start gap-2 text-sm">
+          <div className="flex flex-col gap-2 pt-2 text-sm">
             <AuthLink
               href={`/verify-email${flow.email ? `?email=${encodeURIComponent(flow.email)}` : ""}`}
-              className="p-0"
+              className="text-primary hover:underline"
             >
               Have a verification token? Continue here
             </AuthLink>
             <AuthLink
               href={`/verify-email-otp${flow.email ? `?email=${encodeURIComponent(flow.email)}` : ""}`}
-              className="p-0"
+              className="text-primary hover:underline"
             >
               Verify via OTP instead
             </AuthLink>
@@ -212,17 +289,19 @@ function renderVerificationContent(
       )
     case "verify_phone":
       return (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <RequestPhoneOtp
             phone={flow.phone ?? "your phone"}
             onRequest={handlers.onRequestPhoneOtp}
           />
-          <AuthLink
-            href={`/verify-phone${flow.phone ? `?phone=${encodeURIComponent(flow.phone)}` : ""}`}
-            className="p-0"
-          >
-            Enter OTP now
-          </AuthLink>
+          <div className="pt-2">
+            <AuthLink
+              href={`/verify-phone${flow.phone ? `?phone=${encodeURIComponent(flow.phone)}` : ""}`}
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              Enter OTP now →
+            </AuthLink>
+          </div>
         </div>
       )
     default:
