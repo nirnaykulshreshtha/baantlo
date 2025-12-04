@@ -405,7 +405,7 @@ export function RegisterForm() {
                   <FormField
                     name="displayName"
                     control={form.control}
-                    render={({ field }) => (
+                    render={({ field, fieldState }) => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium">Full name</FormLabel>
                         <FormControl>
@@ -414,10 +414,13 @@ export function RegisterForm() {
                             placeholder="John Doe"
                             maxLength={64}
                             autoFocus
+                            leadingIcon={User}
                             {...field}
                           />
                         </FormControl>
-                        <FormDescription className="text-xs">1-64 characters</FormDescription>
+                        {!fieldState.error && (
+                          <FormDescription className="text-xs">1-64 characters</FormDescription>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
@@ -454,9 +457,7 @@ export function RegisterForm() {
                             {...field}
                           />
                         </FormControl>
-                        <FormDescription className="text-xs">
-                          Must be at least 8 characters long
-                        </FormDescription>
+                        {/* No FormDescription - password strength meter provides feedback */}
                         <FormMessage />
                       </FormItem>
                     )}
@@ -496,7 +497,7 @@ export function RegisterForm() {
                     <FormField
                       name="phone"
                       control={form.control}
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium">Phone number</FormLabel>
                           <FormControl>
@@ -509,9 +510,11 @@ export function RegisterForm() {
                               }}
                             />
                           </FormControl>
-                          <FormDescription className="text-xs">
-                            10-15 digits with country code
-                          </FormDescription>
+                          {!fieldState.error && (
+                            <FormDescription className="text-xs">
+                              10-15 digits with country code
+                            </FormDescription>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -520,7 +523,7 @@ export function RegisterForm() {
                     <FormField
                       name="preferredCurrency"
                       control={form.control}
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium flex items-center gap-2">
                             <Globe className="h-4 w-4" />
@@ -558,9 +561,11 @@ export function RegisterForm() {
                               )}
                             </SelectContent>
                           </Select>
-                          <FormDescription className="text-xs">
-                            Defaults to INR if not selected
-                          </FormDescription>
+                          {!fieldState.error && (
+                            <FormDescription className="text-xs">
+                              Defaults to INR if not selected
+                            </FormDescription>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -572,7 +577,7 @@ export function RegisterForm() {
                     <FormField
                       name="acceptTerms"
                       control={form.control}
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <FormItem>
                           <div className="flex items-start gap-3">
                             <FormControl>
@@ -590,43 +595,18 @@ export function RegisterForm() {
                               >
                                 Accept terms & privacy policy
                               </FormLabel>
-                              <FormDescription className="text-xs leading-relaxed">
-                                By creating an account, you agree to Baantlo's Terms of Service and
-                                Privacy Policy. You can update your preferences at any time.
-                              </FormDescription>
+                              {!fieldState.error && (
+                                <FormDescription className="text-xs leading-relaxed">
+                                  By creating an account, you agree to Baantlo's Terms of Service and
+                                  Privacy Policy. You can update your preferences at any time.
+                                </FormDescription>
+                              )}
                             </div>
                           </div>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-
-                  {/* Review Summary */}
-                  <div className="space-y-3 rounded-lg border border-border/50 bg-muted/30 p-4">
-                    <h3 className="text-sm font-semibold">Review your information</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Name:</span>
-                        <span className="font-medium">{formValues.displayName || "—"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Email:</span>
-                        <span className="font-medium">{formValues.email || "—"}</span>
-                      </div>
-                      {formValues.phone && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Phone:</span>
-                          <span className="font-medium">{formValues.phone}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Currency:</span>
-                        <span className="font-medium">
-                          {formValues.preferredCurrency || "INR (default)"}
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}

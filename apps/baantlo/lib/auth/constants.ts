@@ -53,6 +53,10 @@ export type PlatformPermission = (typeof PLATFORM_PERMISSIONS)[number]
 export type GroupPermission = (typeof GROUP_PERMISSIONS)[number]
 export type AnyPermission = PlatformPermission | GroupPermission
 
+/**
+ * Base routes for authentication endpoints (relative paths).
+ * These will be combined with BACKEND_API_URL to form full URLs.
+ */
 export const AUTH_BACKEND_ROUTES = {
   login: "/auth/login",
   token: "/auth/token",
@@ -70,6 +74,31 @@ export const AUTH_BACKEND_ROUTES = {
   revoke: "/auth/revoke",
   changePassword: "/profile/change-password",
 } as const
+
+/**
+ * Gets the backend API base URL, removing trailing slashes.
+ * @returns The normalized backend API URL
+ */
+function getBackendBaseUrl(): string {
+  // Import env at runtime to avoid circular dependencies during module initialization
+  // This is safe because env is validated at startup
+  const env = require("@/lib/env").env
+  return env.BACKEND_API_URL.replace(/\/+$/, "")
+}
+
+/**
+ * Constructs a full URL for an auth backend route by combining the base URL with the route path.
+ * @param route - Relative route path from AUTH_BACKEND_ROUTES
+ * @returns Full URL combining BACKEND_API_URL with the route
+ */
+export function getAuthBackendUrl(route: string): string {
+  const baseUrl = getBackendBaseUrl()
+  // Ensure route starts with /
+  const normalizedRoute = route.startsWith("/") ? route : `/${route}`
+  // Remove any trailing slashes from baseUrl to avoid double slashes
+  const baseUrlNormalized = baseUrl.replace(/\/+$/, "")
+  return `${baseUrlNormalized}${normalizedRoute}`
+}
 
 export const AUTH_HEADER_JSON = { "Content-Type": "application/json" }
 

@@ -9,7 +9,7 @@
 import { z } from "zod"
 
 import { env } from "@/lib/env"
-import { AUTH_BACKEND_ROUTES, AUTH_HEADER_JSON } from "./constants"
+import { AUTH_BACKEND_ROUTES, AUTH_HEADER_JSON, getAuthBackendUrl } from "./constants"
 import {
   AuthClientError,
   AuthErrorCode,
@@ -94,20 +94,11 @@ async function request<T>(
   init: RequestInit,
   schema: ZodSchema<T>
 ): Promise<T> {
-  // Use proxy route for auth requests (proxied to auth service)
-  // Server-side: /api/auth/* -> Next.js proxy -> auth-service:8001
-  // Ensure path starts with /api/auth prefix
-  const cleanPath = path.startsWith("/api/auth") 
-    ? path 
-    : path.startsWith("/auth") 
-      ? `/api${path}`
-      : `/api/auth${path}`
+  // Use BACKEND_API_URL directly instead of proxy
+  // Construct full URL from route path
+  const url = getAuthBackendUrl(path)
   
-  // Server-side: Use NEXTAUTH_URL as base (Next.js will proxy)
-  const baseUrl = env.NEXTAUTH_URL || "http://localhost:3000"
-  const url = new URL(cleanPath, baseUrl)
-  
-  console.log("[Auth API Client] Using proxy route:", url.href)
+  console.log("[Auth API Client] Using direct backend URL:", url)
   
   const method = init.method || "GET"
 
@@ -125,12 +116,12 @@ async function request<T>(
     method,
     path,
     baseUrl: env.BACKEND_API_URL,
-    fullUrl: url.href,
+    fullUrl: url,
     hasBody: !!hasBody,
   })
 
   try {
-    const response = await fetch(url.href, {
+    const response = await fetch(url, {
       ...init,
       headers: {
         ...jsonHeaders,
@@ -159,7 +150,7 @@ async function request<T>(
     if (!response.ok) {
       console.error("[API Client] Request failed:", {
         method,
-        url: url.href,
+        url: url,
         status: response.status,
         statusText: response.statusText,
         path,
@@ -172,7 +163,7 @@ async function request<T>(
       // Map HTTP status codes to error codes
       if (response.status === 404) {
         code = "user_not_found"
-        message = `The requested resource was not found at ${url.href}. Please verify the backend URL and endpoint path.`
+        message = `The requested resource was not found at ${url}. Please verify the backend URL and endpoint path.`
       } else if (response.status === 401) {
         code = "invalid_credentials"
       } else if (response.status === 429) {
@@ -229,7 +220,7 @@ async function request<T>(
     }
 
     console.log("[API Client] Success:", {
-      url: url.href,
+      url: url,
       method,
     })
 
@@ -237,7 +228,7 @@ async function request<T>(
   } catch (error) {
     // Resolve error with context for better debugging
     throw resolveAuthError(error, {
-      url: url.href,
+      url: url,
       method,
     })
   }
