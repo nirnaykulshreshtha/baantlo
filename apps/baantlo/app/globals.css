@@ -794,3 +794,113 @@
 .animate-slide-up-fade {
   animation: slide-up-fade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Slide animation for countdown timer digits */
+@keyframes countdown-slide-in-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes countdown-slide-out-up {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes countdown-slide-in-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes countdown-slide-out-down {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.countdown-number-wrapper {
+  position: relative;
+  display: inline-flex;
+  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  min-width: 1.5ch;
+  height: 1.2em;
+  line-height: 1.2em;
+  align-items: flex-end;
+  vertical-align: bottom;
+}
+
+.countdown-number {
+  display: inline-flex;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.countdown-number--stable {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: flex-end;
+}
+
+.countdown-number--placeholder {
+  position: relative;
+  display: inline-flex;
+  visibility: hidden;
+  height: 100%;
+}
+
+.countdown-number--in-up {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: flex-end;
+  animation: countdown-slide-in-up 0.32s ease-out forwards;
+}
+
+.countdown-number--out-up {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: flex-end;
+  animation: countdown-slide-out-up 0.32s ease-out forwards;
+}
+
+.countdown-number--in-down {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: flex-end;
+  animation: countdown-slide-in-down 0.32s ease-out forwards;
+}
+
+.countdown-number--out-down {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: flex-end;
+  animation: countdown-slide-out-down 0.32s ease-out forwards;
+}

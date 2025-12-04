@@ -138,11 +138,11 @@ async function fetchPermissions(useCache: boolean = true): Promise<PermissionsCo
       // Dynamic import to avoid bundling env.ts in client bundle
       const { env } = await import("@/lib/env")
       apiUrl = env.BACKEND_API_URL
-        ? `${env.BACKEND_API_URL}/api/permissions`
+        ? `${env.BACKEND_API_URL}/permissions`
         : "http://localhost:3000/api/v1/permissions"
     } else {
       // Client-side: use relative URL
-      apiUrl = "/api/permissions"
+      apiUrl = "/api/v1/permissions"
     }
 
     console.log(`[Permissions Service] Fetching permissions from: ${apiUrl}`)

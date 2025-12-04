@@ -1,48 +1,64 @@
 'use client'
 
+/**
+ * @file verify-phone-otp-form.tsx
+ * @description Form component for verifying phone OTP code.
+ * This is the second step in the phone OTP verification flow.
+ */
+
 import { useState, useTransition } from "react"
 import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { PhoneInput } from "@/components/auth/phone-input"
+import { Separator } from "@/components/ui/separator"
 import { OtpInput } from "@/components/auth/otp-input"
 import { FormError } from "@/components/auth/form-error"
 import { FormSuccess } from "@/components/auth/form-success"
-import { RequestPhoneOtp } from "@/components/auth/request-phone-otp"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
 import { requestPhoneOtpAction, verifyPhoneOtpAction } from "@/lib/auth/actions"
 import { resolveAuthError } from "@/lib/auth/errors"
+import type { PhoneVerificationRequest } from "@/lib/auth/types"
 
-const verifyPhoneSchema = z.object({
-  phone: z.string().min(10, "Enter your phone number"),
+const verifyPhoneOtpSchema = z.object({
   code: z.string().length(6, "Enter the 6 digit code"),
 })
 
-type VerifyPhoneValues = z.infer<typeof verifyPhoneSchema>
+type VerifyPhoneOtpValues = z.infer<typeof verifyPhoneOtpSchema>
 
 type VerifyPhoneOtpFormProps = {
-  initialPhone?: string
+  phone: string
 }
 
-export function VerifyPhoneOtpForm({ initialPhone = "" }: VerifyPhoneOtpFormProps) {
-  const form = useForm<VerifyPhoneValues>({
-    resolver: zodResolver(verifyPhoneSchema),
-    defaultValues: { phone: initialPhone, code: "" },
+/**
+ * Verify Phone OTP Form Component
+ * 
+ * Allows users to enter the OTP code sent to their phone number.
+ * Phone is passed as a prop and used for verification.
+ * 
+ * @param phone - The phone number to verify (required)
+ */
+export function VerifyPhoneOtpForm({ phone }: VerifyPhoneOtpFormProps) {
+  const form = useForm<VerifyPhoneOtpValues>({
+    resolver: zodResolver(verifyPhoneOtpSchema),
+    defaultValues: { code: "" },
   })
 
   const [serverError, setServerError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [resendState, setResendState] = useState<PhoneVerificationRequest | null>(null)
+  const [resendError, setResendError] = useState<string | null>(null)
+  const [isResending, setIsResending] = useState(false)
 
-  const onSubmit = (values: VerifyPhoneValues) => {
+  const onSubmit = (values: VerifyPhoneOtpValues) => {
     setServerError(null)
     startTransition(async () => {
       try {
-        const response = await verifyPhoneOtpAction(values)
+        const response = await verifyPhoneOtpAction({ phone, code: values.code })
         setSuccess(response.message ?? "Phone verified successfully.")
       } catch (error) {
         const resolved = resolveAuthError(error)
@@ -52,35 +68,35 @@ export function VerifyPhoneOtpForm({ initialPhone = "" }: VerifyPhoneOtpFormProp
   }
 
   const handleResend = async () => {
-    const phone = form.getValues("phone")
     if (!phone) {
-      throw new Error("Enter your phone number first")
+      setResendError("Phone number is required")
+      return
     }
-    return requestPhoneOtpAction({ phone })
+    
+    setResendError(null)
+    setIsResending(true)
+    try {
+      const result = await requestPhoneOtpAction({ phone })
+      setResendState(result)
+    } catch (error) {
+      const resolved = resolveAuthError(error)
+      setResendError(resolved.message)
+    } finally {
+      setIsResending(false)
+    }
   }
 
   return (
     <Card className="mx-auto w-full max-w-xl shadow-none">
       <CardHeader>
-        <CardTitle>Verify phone via OTP</CardTitle>
-        <CardDescription>Enter the code sent to your phone. Codes expire after 5 minutes.</CardDescription>
+        <CardTitle>Enter verification code</CardTitle>
+        <CardDescription>
+          We sent a 6-digit code to <span className="font-medium">{phone}</span>. Enter it below to verify your phone. Codes expire after 5 minutes.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              name="phone"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone number</FormLabel>
-                  <FormControl>
-                    <PhoneInput placeholder="Enter phone with country code" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               name="code"
               control={form.control}
@@ -88,7 +104,7 @@ export function VerifyPhoneOtpForm({ initialPhone = "" }: VerifyPhoneOtpFormProp
                 <FormItem>
                   <FormLabel>Verification code</FormLabel>
                   <FormControl>
-                    <OtpInput value={field.value} onChange={field.onChange} />
+                    <OtpInput value={field.value ?? ""} onChange={field.onChange} length={6} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -101,14 +117,35 @@ export function VerifyPhoneOtpForm({ initialPhone = "" }: VerifyPhoneOtpFormProp
             </Button>
           </form>
         </Form>
-        <RequestPhoneOtp
-          phone={form.watch("phone") || "your phone"}
-          onRequest={handleResend}
-        />
+        
+        <Separator className="my-6" />
+        
+        <div className="space-y-3">
+          <div className="space-y-2">
+            {resendError ? <FormError message={resendError} /> : null}
+            {resendState?.sent ? (
+              <FormSuccess message="Code sent successfully. Please check your phone." />
+            ) : null}
+            {resendState?.cooldown_seconds ? (
+              <p className="text-muted-foreground text-xs text-center">
+                You can request another code in approximately {resendState.cooldown_seconds} seconds.
+              </p>
+            ) : null}
+          </div>
+          <div className="text-center">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleResend}
+              disabled={isResending || isPending}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              {isResending ? "Sending..." : "Didn't receive code? Resend"}
+            </Button>
+          </div>
+        </div>
       </CardContent>
-      <CardFooter className="justify-center text-sm text-muted-foreground">
-        Contact support if you are not receiving OTPs.
-      </CardFooter>
     </Card>
   )
 }
